@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Ensure Tailwind scans the @clawket/ui component sources so that classes
+ * used only inside this package (e.g. `h-screen` on AppShell.Root) are
+ * emitted into the consumer app's CSS bundle. Paths are resolved relative
+ * to this file (packages/ui/src/styles/base.css).
+ */
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+
+/*
+ * Tailwind v4 @theme inline — bind CSS variables into Tailwind utility scales.
+ *
+ * Naming convention follows Tailwind v4's "@theme inline" expectations:
+ *   --color-*    → bg-*, text-*, border-*, ring-*, etc.
+ *   --font-*     → font-* family + font-size-* utility map
+ *   --radius-*   → rounded-*
+ *   --shadow-*   → shadow-*
+ *   --text-*     → text-* (font-size + line-height pairing)
+ */
+@theme inline {
+  /* ---- Colors ---- */
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-high: var(--color-surface-high);
+  --color-surface-sunken: var(--color-surface-sunken);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-subtle: var(--color-subtle);
+  --color-border: var(--color-border);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-on-primary: var(--color-on-primary);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-accent: var(--color-accent);
+
+  /* ---- Fonts ---- */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+
+  /* Typography scale → `text-display-2xl` utility, etc. */
+  --text-display-2xl: var(--font-size-display-2xl);
+  --text-display-2xl--line-height: var(--line-height-heading);
+  --text-display-2xl--font-weight: var(--font-weight-display-2xl);
+
+  --text-display-xl: var(--font-size-display-xl);
+  --text-display-xl--line-height: var(--line-height-heading);
+  --text-display-xl--font-weight: var(--font-weight-display-xl);
+
+  --text-headline-lg: var(--font-size-headline-lg);
+  --text-headline-lg--line-height: var(--line-height-heading);
+  --text-headline-lg--font-weight: var(--font-weight-headline-lg);
+
+  --text-headline-md: var(--font-size-headline-md);
+  --text-headline-md--line-height: var(--line-height-heading);
+  --text-headline-md--font-weight: var(--font-weight-headline-md);
+
+  --text-body-lg: var(--font-size-body-lg);
+  --text-body-lg--line-height: var(--line-height-body);
+
+  --text-body-base: var(--font-size-body-base);
+  --text-body-base--line-height: var(--line-height-body);
+
+  --text-body-sm: var(--font-size-body-sm);
+  --text-body-sm--line-height: var(--line-height-body);
+
+  --text-label-sm: var(--font-size-label-sm);
+  --text-label-sm--line-height: var(--line-height-body);
+  --text-label-sm--font-weight: var(--font-weight-label-sm);
+
+  /* ---- Radii ---- */
+  --radius-sm: var(--radius-sm);
+  --radius-base: var(--radius-base);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  /* ---- Shadows ---- */
+  --shadow-subtle: var(--shadow-subtle);
+  --shadow-elevated: var(--shadow-elevated);
+}
+
+@layer base {
+  html,
+  body {
+    font-family: var(--font-sans);
+    line-height: var(--line-height-body);
+    color: var(--color-foreground);
+    background: var(--color-background);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    line-height: var(--line-height-heading);
+  }
+
+  code, pre, kbd {
+    font-family: var(--font-mono);
+  }
+
+  /*
+   * Accessibility: keyboard focus ring. We intentionally do NOT remove the
+   * native outline globally — instead we replace it with a high-contrast
+   * tokenised ring so every interactive element inherits a consistent
+   * focus-visible affordance.
+   */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius-sm);
+  }
+}

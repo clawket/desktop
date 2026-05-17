@@ -1,0 +1,24 @@
+{
+  "name": "@clawket/desktop-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Clawket desktop application — Tauri shell + React UI + shared design system. Monorepo root (pnpm workspace).",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --filter @clawket/desktop dev",
+    "build": "pnpm -r --filter=./packages/* build && pnpm --filter @clawket/desktop build",
+    "build:ui": "pnpm --filter @clawket/ui build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "storybook": "pnpm --filter @clawket/ui storybook"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

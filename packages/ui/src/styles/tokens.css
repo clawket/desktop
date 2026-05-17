@@ -1,0 +1,108 @@
+/*
+ * @clawket/ui — design tokens
+ * Sources:
+ *   - Color palette + base scales: Stitch design_tokens.json (semantic only)
+ *   - Typography / radii extensions: Stitch DESIGN.md frontmatter (typography +
+ *     rounded), Material 3 color tokens IGNORED.
+ *
+ * Tokens are exposed as :root CSS variables and bound into Tailwind v4 via
+ * `@theme inline` in `base.css`, so utilities like `bg-surface`,
+ * `text-foreground`, `rounded-lg`, `font-display`, `text-display-2xl` resolve
+ * to these values.
+ *
+ * Theme switch: <html data-theme="light"> flips the palette to the light set.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  /* ---- Palette (dark workbench, default) ---- */
+  --color-background: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-high: #1f1f1f;
+  --color-surface-sunken: #000000;
+  --color-foreground: #ededed;
+  --color-muted: #a1a1a1;
+  --color-subtle: #525252;
+  --color-border: #262626;
+  --color-primary: #ffffff;
+  --color-primary-hover: #e5e5e5;
+  --color-on-primary: #0a0a0a;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-accent: #8b5cf6;
+
+  /* ---- Font families ---- */
+  --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, monospace;
+  --font-display: "Geist Sans", "Instrument Sans", sans-serif;
+
+  /* ---- Typography scale (Stitch DESIGN.md frontmatter) ---- */
+  /* Display */
+  --font-size-display-2xl: 2.25rem;     /* 36px */
+  --font-weight-display-2xl: 700;
+  --font-size-display-xl: 1.875rem;     /* 30px */
+  --font-weight-display-xl: 600;
+  /* Headline */
+  --font-size-headline-lg: 1.5rem;      /* 24px */
+  --font-weight-headline-lg: 600;
+  --font-size-headline-md: 1.25rem;     /* 20px */
+  --font-weight-headline-md: 600;
+  /* Body */
+  --font-size-body-lg: 1.125rem;        /* 18px */
+  --font-weight-body-lg: 400;
+  --font-size-body-base: 1rem;          /* 16px */
+  --font-weight-body-base: 400;
+  --font-size-body-sm: 0.875rem;        /* 14px */
+  --font-weight-body-sm: 400;
+  /* Label (mono — file:line, ticket numbers, agent tags) */
+  --font-size-label-sm: 0.75rem;        /* 12px */
+  --font-weight-label-sm: 500;
+
+  --line-height-body: 1.55;
+  --line-height-heading: 1.2;
+
+  /* ---- Radii ---- */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-base: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-none: none;
+  --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-elevated: 0 2px 8px -2px rgb(0 0 0 / 0.40), 0 1px 4px -1px rgb(0 0 0 / 0.30);
+
+  /* ---- Motion ---- */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --motion-duration: var(--motion-base);
+  --motion-timing: ease-out;
+
+  /* ---- A11y ---- */
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--color-primary);
+  --focus-ring-offset: 2px;
+}
+
+:root[data-theme="light"] {
+  --color-background: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-high: #f5f5f5;
+  --color-surface-sunken: #f0f0f0;
+  --color-foreground: #171717;
+  --color-muted: #737373;
+  --color-subtle: #a3a3a3;
+  --color-border: #e5e5e5;
+  --color-primary: #000000;
+  --color-primary-hover: #262626;
+  --color-on-primary: #ffffff;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-accent: #7c3aed;
+}

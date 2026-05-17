@@ -1,0 +1,62 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+pnpm-debug.log*
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Compiled TS config artefacts (tsconfig.node.json has `composite: true`,
+# which emits vite.config.{js,d.ts} next to vite.config.ts).
+apps/*/vite.config.js
+apps/*/vite.config.d.ts
+packages/*/vite.config.js
+packages/*/vite.config.d.ts
+
+# Tauri build artifacts (do NOT ignore Cargo.lock — Tauri Rust crate is a
+# binary application; commit the lockfile for reproducible builds, matching
+# the cli/daemon Rust conventions).
+apps/*/src-tauri/target/
+apps/*/src-tauri/gen/
+apps/*/src-tauri/WixTools/
+
+# UI package compiled assets
+packages/*/dist/
+packages/*/.turbo/
+
+# Storybook
+storybook-static/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Env / local
+.env
+.env.*
+!.env.example
+.local/
+
+# Test
+coverage/
+*.lcov
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# SQLite (defence-in-depth; user data lives under ~/.local/share/clawket/ per LM-8)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

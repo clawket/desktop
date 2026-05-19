@@ -73,7 +73,7 @@ during work on `packages/ui` and `apps/desktop`.
 ## Daemon / wrapper relationship
 
 - This sub-repo sits next to the other Clawket sub-repos (cli / daemon / web /
-  landing / tap / evals / clawket plugin shell) under the
+  landing / clawket plugin shell) under the
   [`clawket`](https://github.com/clawket) GitHub org.
 - The daemon binary itself is unchanged — Tauri spawns it as a child and talks
   over the Unix socket using the same pattern as `cli/src/daemon_autostart.rs`.

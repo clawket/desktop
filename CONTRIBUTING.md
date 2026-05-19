@@ -33,8 +33,7 @@ Tauri shell. The shell will try to spawn `clawketd` automatically; for that
 you need `clawketd` discoverable via `CLAWKET_DAEMON_BIN` env, `$PATH`, or
 one of the XDG candidate paths used by the CLI's
 `daemon_autostart::resolve_daemon_bin`. Build the daemon from
-[`clawket/daemon`](https://github.com/clawket/daemon) or
-`brew install clawket/tap/clawketd`.
+[`clawket/daemon`](https://github.com/clawket/daemon).
 
 If a daemon is already running, the Tauri spawn is rejected by the daemon's
 own flock and the app falls through to the live socket — intentional.

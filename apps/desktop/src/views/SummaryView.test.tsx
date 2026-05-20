@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { SummaryView } from "./SummaryView";
+import { SummaryView, findActivePlan, findActiveTask } from "./SummaryView";
 import { DataProvider } from "../data/DataProvider";
 import type { DaemonClient } from "../data/api";
 import type {
@@ -252,5 +252,107 @@ describe("SummaryView", () => {
       expect(screen.getByTestId("summary-error")).toBeInTheDocument(),
     );
     expect(screen.getByTestId("summary-error")).toHaveTextContent("daemon down");
+  });
+
+  it("shows 'No active plan' subtitle when the most-recent plan is not active (LM-11033)", async () => {
+    // Pre-fix bug: a draft/completed plan at plans[0] rendered as if active,
+    // misleading users about project state. Mirror of LM-11032 web fix.
+    const completedPlan: Plan = { ...PLAN, id: "PLAN-OLD", status: "completed" };
+    renderWith(
+      seededClient({
+        plans: [completedPlan],
+        units: [],
+        cycles: [],
+        tasks: [],
+      }),
+    );
+    const view = await screen.findByTestId("view-summary");
+    expect(within(view).getByText("No active plan")).toBeInTheDocument();
+  });
+
+  it("shows the empty 'no active task' branch when no task is in_progress (LM-11033)", async () => {
+    const tasks: Task[] = [
+      makeTask({ id: "T1", ticket_number: "LM-1", status: "done" }),
+      makeTask({ id: "T2", ticket_number: "LM-2", status: "todo" }),
+    ];
+    renderWith(
+      seededClient({ plans: [PLAN], units: [UNIT], cycles: [CYCLE], tasks }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("no-active-task")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("active-task-card")).not.toBeInTheDocument();
+  });
+});
+
+function plan(status: Plan["status"], id = `PLAN-${status}`): Plan {
+  return {
+    id,
+    project_id: "PROJ-1",
+    title: `${status} plan`,
+    description: null,
+    source: "manual",
+    source_path: null,
+    created_at: "2026-05-14T04:00:00.000Z",
+    approved_at: null,
+    status,
+  };
+}
+
+function task(status: Task["status"], id = `TASK-${status}`): Task {
+  return {
+    id,
+    unit_id: "UNIT-1",
+    cycle_id: "CYC-1",
+    parent_task_id: null,
+    ticket_number: `LM-${id}`,
+    idx: 0,
+    title: `${status} task`,
+    body: "",
+    priority: "medium",
+    complexity: null,
+    estimated_edits: null,
+    type: "task",
+    reporter: null,
+    assignee: null,
+    agent_id: null,
+    created_at: "2026-05-14T05:00:00.000Z",
+    started_at: null,
+    completed_at: null,
+    status,
+    depends_on: [],
+    labels: [],
+    atomic_size_hint: "small",
+    decomposition_policy: "auto",
+  };
+}
+
+describe("findActivePlan (LM-11033)", () => {
+  it("returns the active plan when one exists", () => {
+    const result = findActivePlan([plan("completed"), plan("active"), plan("draft")]);
+    expect(result?.status).toBe("active");
+  });
+
+  it("returns null when no plan is active — never falls back to plans[0]", () => {
+    expect(findActivePlan([plan("completed"), plan("draft")])).toBeNull();
+  });
+
+  it("returns null on empty input", () => {
+    expect(findActivePlan([])).toBeNull();
+  });
+});
+
+describe("findActiveTask (LM-11033)", () => {
+  it("returns the in_progress task when one exists", () => {
+    const result = findActiveTask([task("done"), task("in_progress"), task("todo")]);
+    expect(result?.status).toBe("in_progress");
+  });
+
+  it("returns null when no task is in_progress — never falls back to tasks[0]", () => {
+    expect(findActiveTask([task("done"), task("todo")])).toBeNull();
+  });
+
+  it("returns null on empty input", () => {
+    expect(findActiveTask([])).toBeNull();
   });
 });

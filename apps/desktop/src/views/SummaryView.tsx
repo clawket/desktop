@@ -240,8 +240,19 @@ function TimelineRow({ event }: TimelineRowProps) {
   );
 }
 
-function findActivePlan(plans: Plan[]): Plan | null {
-  return plans.find((p) => p.status === "active") ?? plans[0] ?? null;
+// LM-11032: "Now active" / subtitle must reflect lifecycle status, not
+// recency. The previous `?? plans[0]` fallback caused the most-recent plan
+// (typically draft or completed) to render as if it were active, which lied
+// to users about the project's real state. Same anti-pattern was duplicated
+// for `activeTask` below — both are now strict on status and let the render
+// path show the empty/null branch when nothing is truly active. Mirrors the
+// web fix in `clawket/web/src/components/SummaryView.tsx` (LM-11033 parity).
+export function findActivePlan(plans: Plan[]): Plan | null {
+  return plans.find((p) => p.status === "active") ?? null;
+}
+
+export function findActiveTask(tasks: Task[]): Task | null {
+  return tasks.find((t) => t.status === "in_progress") ?? null;
 }
 
 function findActiveCycleAndUnit(
@@ -291,8 +302,7 @@ export function SummaryView() {
   for (const t of tasks) counts[t.status] += 1;
 
   const activePlan = findActivePlan(plans);
-  const activeTask =
-    tasks.find((t) => t.status === "in_progress") ?? tasks[0] ?? null;
+  const activeTask = findActiveTask(tasks);
   const recentEvents = timeline.slice(0, 5);
   const { unitTitle } = findActiveCycleAndUnit(cycles, units);
 

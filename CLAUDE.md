@@ -2,7 +2,7 @@
 
 Clawket 데스크탑 애플리케이션. Tauri 2 (Rust shell) 가 `clawketd` 를 자식 프로세스로 spawn 하고, WebView 안에서 React 19 + Vite SPA 가 동일한 데몬 HTTP/SSE 표면을 소비한다. `packages/ui` 가 공유 디자인 시스템.
 
-> 본 파일은 **이 sub-repo (desktop)** 의 AI 컨텍스트 정본이다. Cross-repo 좌표 (compatibility matrix, release order, plugin install gate) 는 wrapper 인 `github.com/clawket/clawket` 의 `CLAUDE.md` + `docs/COMPATIBILITY.md` + `docs/RELEASING.md` 가 단일 진실 공급원 — 여기에 옮기지 않는다. v3.0.0 baseline 에서 `components.json#desktop = null` (pre-release sentinel) 이고, 첫 GitHub Release 가 발행되면 string tag 로 교체된다.
+> 본 파일은 **이 sub-repo (desktop)** 의 AI 컨텍스트 정본이다. Cross-repo 좌표 (compatibility matrix, release order, plugin install gate) 는 wrapper 인 `github.com/clawket/clawket` 의 `CLAUDE.md` + `docs/COMPATIBILITY.md` + `docs/RELEASING.md` 가 단일 진실 공급원 — 여기에 옮기지 않는다. `components.json#desktop = null` (pre-release sentinel) 이고, 첫 GitHub Release 가 발행되면 string tag 로 교체된다.
 
 ## Stack
 
@@ -61,7 +61,7 @@ desktop/
 | Tauri capabilities = `core:default` 만. fs / shell / http 등 광범위 권한 미허용. | `apps/desktop/src-tauri/capabilities/default.json:6` |
 | 활성 프로젝트 first-run fallback = `PROJ-lattice-mono` (이후는 localStorage `clawket.activeProjectId` + 데몬 `/projects` 결과). | `apps/desktop/src/App.tsx:25` |
 | Tauri command `read_token` 는 frontend 에서 `invoke('read_token')` 으로 호출. 데몬 X-Clawket-Token 헤더 fallback 용. | `apps/desktop/src-tauri/src/token.rs`, registered at `lib.rs:17` |
-| 버전 SSoT = `apps/desktop/package.json#version` (v3.0.0 release plan 의 `sync-version.mjs` 가 src-tauri/tauri.conf.json + Cargo.toml 을 빌드 직전 동기화). | v3.0.0 baseline `0.1.0` (3 곳 동일 유지) |
+| 버전 SSoT = `apps/desktop/package.json#version` (release infra 의 `sync-version.mjs` 가 src-tauri/tauri.conf.json + Cargo.toml 을 빌드 직전 동기화). | pre-release baseline `0.1.0` (3 곳 동일 유지) |
 | `apps/*/src-tauri/Cargo.lock` 은 **커밋**. Tauri Rust 크레이트는 바이너리이므로 cli / daemon 과 동일 convention. | `.gitignore` (해당 패턴 제외됨) |
 
 ## React 표면
@@ -89,7 +89,7 @@ desktop/
 | `pnpm storybook` | `@clawket/ui` 컴포넌트 카탈로그 |
 | `pnpm --filter @clawket/desktop test:watch` | 앱 한정 vitest watch |
 
-CI workflow (`.github/workflows/ci.yml` — 사후 추가 예정): `pnpm typecheck` + `pnpm lint` + `pnpm test`. v3.0.0 첫 release 시 `release.yml` (`tauri-action` 매트릭스 + bump-manifest) 가 별도 추가된다 — release infra 는 별도 plan 의 책임.
+CI workflow (`.github/workflows/ci.yml` — 사후 추가 예정): `pnpm typecheck` + `pnpm lint` + `pnpm test`. 첫 release 시 `release.yml` (`tauri-action` 매트릭스 + bump-manifest) 가 별도 추가된다 — release infra 는 별도 plan 의 책임.
 
 ## Design system 컨텍스트
 
@@ -104,7 +104,7 @@ Stitch (Google) 생성 디자인 시안의 토큰 정본은 `clawket/.local/stit
 - `clawket/CLAUDE.md` — wrapper 운영 규칙 + 컴포넌트 좌표
 - `clawket/docs/RELEASING.md` — 릴리스 순서·체크리스트
 - `clawket/docs/COMPATIBILITY.md` — daemon ↔ cli ↔ web ↔ desktop ↔ plugin 버전 범위
-- `clawket/components.json` — desktop 의 핀 (v3.0.0 = `null`, 첫 release 발행 시 string tag)
+- `clawket/components.json` — desktop 의 핀 (`null` sentinel, 첫 release 발행 시 string tag)
 - `clawket/adapters/shared/claude-hooks.cjs::ensureDesktopBundle` — install gate 의 desktop bundle 다운로드 책임
 
 위 내용은 이 파일에서 중복하지 않는다.
@@ -115,7 +115,7 @@ Stitch (Google) 생성 디자인 시안의 토큰 정본은 `clawket/.local/stit
 2. **변경 후 검증 전 done 보고 금지** — 프런트 변경은 `pnpm typecheck` + `pnpm lint` + `pnpm test`, Rust 변경은 `cd apps/desktop/src-tauri && cargo check` (가능하면 `cargo clippy --all-targets`). 활성 task 에 `--evidence` 로 file:line 또는 reasoning summary 를 항상 동봉.
 3. **Tauri capabilities 광범위화 금지.** `apps/desktop/src-tauri/capabilities/default.json` 에 `core:default` 외 권한을 추가하려면 PR 본문에 명시적 정당화. WebView 는 shell 을 신뢰하므로 capability 표면이 곧 데몬 공격 표면.
 4. **UDS-only transport invariant 유지.** `apps/desktop/src-tauri/src/socket.rs` 가 CLI 의 `cli-unix-socket-only-no-tcp-fallback.md` 를 명시 인용한다 — TCP fallback / 토큰 자동 dial / port 파일 fallback 추가 금지. 새 Rust 모듈이 데몬에 직접 dial 한다면 동일 invariant 를 따른다.
-5. **버전 3 곳 동시 핸드 편집 금지.** `apps/desktop/{package.json,src-tauri/tauri.conf.json,src-tauri/Cargo.toml}` 세 곳의 version 은 v3.0.0 release plan 의 `sync-version.mjs` 가 빌드 직전 동기화하도록 설계되어 있다. release infra 가 land 되기 전까지 세 곳 모두 baseline `0.1.0` 유지.
+5. **버전 3 곳 동시 핸드 편집 금지.** `apps/desktop/{package.json,src-tauri/tauri.conf.json,src-tauri/Cargo.toml}` 세 곳의 version 은 release infra 의 `sync-version.mjs` 가 빌드 직전 동기화하도록 설계되어 있다. release infra 가 land 되기 전까지 세 곳 모두 baseline `0.1.0` 유지.
 6. **`apps/*/src-tauri/Cargo.lock` 은 커밋.** Tauri Rust 크레이트는 바이너리 — cli/daemon convention 과 동일. `.gitignore` 에서 제외하면 안 된다.
 7. **Tailwind v4 CSS-first invariant 유지.** `tailwind.config.{js,ts}` / `postcss.config.js` 신설 금지, `@apply` 신규 도입 금지, JSX 에 hex `bg-[#…]` 금지 — `packages/ui/src/styles/tokens.css` 가 single source. `clawket/web/.claude/rules/tailwind-v4-css-first.md` 와 동일 정신.
 8. **데몬 변경 동반 시 cross-repo PR.** SSE 이벤트명 / envelope / HTTP 응답 모양 변경은 `clawket/daemon` 측 emit / 응답과 같은 release cycle 에서 짝지어 land — 본 sub-repo 단독 변경 금지. `clawket/web/.claude/rules/sse-event-synchronization.md` 의 consumer 측 invariant 와 동일.

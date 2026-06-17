@@ -61,7 +61,7 @@ desktop/
 | Tauri capabilities = `core:default` 만. fs / shell / http 등 광범위 권한 미허용. | `apps/desktop/src-tauri/capabilities/default.json:6` |
 | 활성 프로젝트 first-run fallback = `PROJ-lattice-mono` (이후는 localStorage `clawket.activeProjectId` + 데몬 `/projects` 결과). | `apps/desktop/src/App.tsx:25` |
 | Tauri command `read_token` 는 frontend 에서 `invoke('read_token')` 으로 호출. 데몬 X-Clawket-Token 헤더 fallback 용. | `apps/desktop/src-tauri/src/token.rs`, registered at `lib.rs:17` |
-| 버전 SSoT = `apps/desktop/package.json#version` (release infra 의 `sync-version.mjs` 가 src-tauri/tauri.conf.json + Cargo.toml 을 빌드 직전 동기화). | pre-release baseline `0.1.0` (3 곳 동일 유지) |
+| 버전 SSoT = `apps/desktop/package.json#version`. `scripts/sync-version.mjs` 가 src-tauri/tauri.conf.json + Cargo.toml 을 동기화 (release 워크플로의 bump 단계가 호출). | baseline `0.1.0` (첫 release 전까지 3 곳 동일 유지) |
 | `apps/*/src-tauri/Cargo.lock` 은 **커밋**. Tauri Rust 크레이트는 바이너리이므로 cli / daemon 과 동일 convention. | `.gitignore` (해당 패턴 제외됨) |
 
 ## React 표면
@@ -89,7 +89,14 @@ desktop/
 | `pnpm storybook` | `@clawket/ui` 컴포넌트 카탈로그 |
 | `pnpm --filter @clawket/desktop test:watch` | 앱 한정 vitest watch |
 
-CI workflow (`.github/workflows/ci.yml` — 사후 추가 예정): `pnpm typecheck` + `pnpm lint` + `pnpm test`. 첫 release 시 `release.yml` (`tauri-action` 매트릭스 + bump-manifest) 가 별도 추가된다 — release infra 는 별도 plan 의 책임.
+CI workflow (`.github/workflows/ci.yml` — 사후 추가 예정): `pnpm typecheck` + `pnpm lint` + `pnpm test`.
+
+**Release** — macOS 는 **로컬 서명** (서명 인증서가 CI 가 아니라 개발자 login keychain 에 있다 — agent-deck 와 동일 모델). Windows 미빌드.
+
+- `scripts/build-macos-release.sh` — signed + notarized + stapled `.app` + `.dmg` 로컬 빌드. Tauri 가 `.app` 서명/노터라이즈, 스크립트가 `.dmg` wrapper 를 추가 notarize + staple. clawket desktop 은 nested 바이너리를 번들하지 않으므로 (clawketd 는 spawn) nested 서명 단계 없음.
+- `scripts/release-macos.sh` — 한 방 진입점: 빌드 → `gh release create v<version>` (현재 `0.1.0` → `v0.1.0`). 새 버전은 `apps/desktop/package.json#version` 을 먼저 bump.
+- 서명 env: `APPLE_SIGNING_IDENTITY` + (Method A: `APPLE_ID`/`APPLE_PASSWORD`/`APPLE_TEAM_ID`) 또는 (Method B: `APPLE_API_KEY`/`APPLE_API_ISSUER`/`APPLE_API_KEY_PATH`). 예: `set -a; source ~/.config/agent-deck/release.env; set +a`.
+- `.github/workflows/release.yml` (`on: release: published`) — 위 로컬 release 가 발행되면 CI 가 Linux x64 `.AppImage` 를 빌드해 같은 release 에 attach 하고, `clawket/clawket` components.json `desktop` 핀 flip PR 을 연다 (조직 secret `CLAWKET_RELEASE_PAT`). Linux 빌드는 서명이 없어 별도 시크릿 불필요.
 
 ## Design system 컨텍스트
 

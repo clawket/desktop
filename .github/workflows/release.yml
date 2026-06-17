@@ -1,0 +1,116 @@
+name: Release (Linux + manifest)
+
+# The macOS .dmg is built, SIGNED, NOTARIZED, and published LOCALLY via
+# `scripts/release-macos.sh` (the signing identity lives in the developer's
+# login keychain — there is no certificate in CI). Publishing that GitHub
+# Release triggers this workflow, which:
+#   1. builds the Linux x64 .AppImage (no signing needed) and attaches it to
+#      the same release, and
+#   2. opens a clawket/clawket PR flipping components.json#desktop from null to
+#      the release tag.
+#
+# Windows is intentionally not built. Re-run manually for an existing tag via
+# `workflow_dispatch` if the Linux build or the bump PR needs to be retried.
+#
+# Required org-level secret: CLAWKET_RELEASE_PAT (contents:write +
+# pull_requests:write across the clawket org — for the bump-manifest PR).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to attach the Linux build to + bump (e.g. v0.1.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  linux-appimage:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - name: Install Linux bundle dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            build-essential curl wget file libssl-dev
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build shared packages
+        run: pnpm -r --filter=./packages/* build
+      - name: Build Linux .AppImage
+        run: pnpm --filter @clawket/desktop exec tauri build --bundles appimage
+      - name: Attach .AppImage to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          APPIMAGE=$(ls -t apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage | head -1)
+          echo "Uploading: $APPIMAGE"
+          gh release upload "$TAG" "$APPIMAGE" --repo "$GITHUB_REPOSITORY" --clobber
+
+  bump-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Flip components.json desktop pin in clawket/clawket
+        env:
+          GH_TOKEN: ${{ secrets.CLAWKET_RELEASE_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="bump/desktop-${TAG}"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/clawket/clawket.git" plugin
+          cd plugin
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Idempotent: skip if the pin is already this tag (e.g. workflow re-run).
+          CURRENT=$(jq -r '.desktop' components.json)
+          if [ "$CURRENT" = "$TAG" ]; then
+            echo "components.json#desktop already ${TAG} — nothing to do."
+            exit 0
+          fi
+
+          git checkout -B "$BRANCH"
+          jq --arg ver "$TAG" '.desktop = $ver' components.json > components.json.tmp
+          mv components.json.tmp components.json
+          git add components.json
+          git commit -m "chore: bump desktop to ${TAG}"
+          git push origin "$BRANCH" --force-with-lease
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump desktop to ${TAG}" \
+            --body "Auto-generated from ${GITHUB_REPOSITORY} release ${TAG}. Flips components.json#desktop from null to ${TAG}; the plugin install gate then downloads the desktop bundle. Confirm COMPATIBILITY.md has a matching row before merge." \
+            || echo "PR may already exist for ${BRANCH}"

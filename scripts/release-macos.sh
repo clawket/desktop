@@ -42,15 +42,22 @@ DMG="$(ls -t "${APP_DIR}"/src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null 
 [[ -z "${DMG}" ]] && { err "No .dmg found after build"; exit 1; }
 info "Built: ${DMG##*/}"
 
+# Publish under a stable, version-less name so the landing page can link
+# /releases/latest/download/Clawket-macOS-<arch>.dmg forever (arch = arm64 on
+# Apple Silicon, x86_64 on Intel).
+ARCH="$(uname -m)"
+STABLE_DMG="${APP_DIR}/src-tauri/target/release/bundle/dmg/Clawket-macOS-${ARCH}.dmg"
+cp -f "${DMG}" "${STABLE_DMG}"
+
 info "Creating GitHub Release ${TAG} on ${REPO}…"
-gh release create "${TAG}" "${DMG}" \
+gh release create "${TAG}" "${STABLE_DMG}" \
   --repo "${REPO}" \
   --target main \
   --title "Clawket Desktop ${TAG}" \
   --notes "Download the installer for your platform below.
 
-- **macOS** — \`.dmg\`, Developer ID signed + notarized.
-- **Linux** — \`.AppImage\`, attached by CI shortly after this release is published."
+- **macOS** — \`Clawket-macOS-${ARCH}.dmg\`, Developer ID signed + notarized.
+- **Linux** — \`Clawket-Linux-x86_64.AppImage\`, attached by CI shortly after this release is published."
 
 info "Published ${TAG}. CI (on: release: published) now builds the Linux .AppImage,"
 info "attaches it, and opens the components.json desktop pin-flip PR in clawket/clawket."

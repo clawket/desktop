@@ -66,48 +66,13 @@ jobs:
         run: pnpm -r --filter=./packages/* build
       - name: Build Linux .AppImage
         run: pnpm --filter @clawket/desktop exec tauri build --bundles appimage
-      - name: Attach .AppImage to the release
+      - name: Attach .AppImage to the release (stable, version-less name)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           APPIMAGE=$(ls -t apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage | head -1)
-          echo "Uploading: $APPIMAGE"
-          gh release upload "$TAG" "$APPIMAGE" --repo "$GITHUB_REPOSITORY" --clobber
-
-  bump-manifest:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Flip components.json desktop pin in clawket/clawket
-        env:
-          GH_TOKEN: ${{ secrets.CLAWKET_RELEASE_PAT }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          BRANCH="bump/desktop-${TAG}"
-
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/clawket/clawket.git" plugin
-          cd plugin
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Idempotent: skip if the pin is already this tag (e.g. workflow re-run).
-          CURRENT=$(jq -r '.desktop' components.json)
-          if [ "$CURRENT" = "$TAG" ]; then
-            echo "components.json#desktop already ${TAG} — nothing to do."
-            exit 0
-          fi
-
-          git checkout -B "$BRANCH"
-          jq --arg ver "$TAG" '.desktop = $ver' components.json > components.json.tmp
-          mv components.json.tmp components.json
-          git add components.json
-          git commit -m "chore: bump desktop to ${TAG}"
-          git push origin "$BRANCH" --force-with-lease
-
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "chore: bump desktop to ${TAG}" \
-            --body "Auto-generated from ${GITHUB_REPOSITORY} release ${TAG}. Flips components.json#desktop from null to ${TAG}; the plugin install gate then downloads the desktop bundle. Confirm COMPATIBILITY.md has a matching row before merge." \
-            || echo "PR may already exist for ${BRANCH}"
+          # Stable name so the landing page can link
+          # /releases/latest/download/Clawket-Linux-x86_64.AppImage forever.
+          cp "$APPIMAGE" "Clawket-Linux-x86_64.AppImage"
+          gh release upload "$TAG" "Clawket-Linux-x86_64.AppImage" --repo "$GITHUB_REPOSITORY" --clobber

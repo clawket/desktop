@@ -79,10 +79,12 @@ cd -- "${REPO_ROOT}"
 pnpm install --frozen-lockfile
 pnpm -r --filter=./packages/* build
 node scripts/sync-version.mjs
+# Universal build (Apple Silicon + Intel) so one .dmg runs on every Mac.
+rustup target add aarch64-apple-darwin x86_64-apple-darwin >/dev/null 2>&1 || true
 # Tauri signs + notarizes the .app during the bundle. --bundles app,dmg.
-pnpm --filter @clawket/desktop exec tauri build --bundles app,dmg
+pnpm --filter @clawket/desktop exec tauri build --bundles app,dmg --target universal-apple-darwin
 
-DMG="$(ls -t "${APP_DIR}"/src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)"
+DMG="$(ls -t "${APP_DIR}"/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg 2>/dev/null | head -1)"
 [[ -z "${DMG}" ]] && { err "No .dmg produced under apps/desktop/src-tauri/target/release/bundle/dmg/"; exit 1; }
 
 # Tauri notarizes/staples the .app but only signs the .dmg wrapper. A downloaded

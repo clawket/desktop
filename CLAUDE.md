@@ -96,7 +96,8 @@ CI workflow (`.github/workflows/ci.yml` — 사후 추가 예정): `pnpm typeche
 - `scripts/build-macos-release.sh` — signed + notarized + stapled `.app` + `.dmg` 로컬 빌드. Tauri 가 `.app` 서명/노터라이즈, 스크립트가 `.dmg` wrapper 를 추가 notarize + staple. clawket desktop 은 nested 바이너리를 번들하지 않으므로 (clawketd 는 spawn) nested 서명 단계 없음.
 - `scripts/release-macos.sh` — 한 방 진입점: 빌드 → `gh release create v<version>` (현재 `0.1.0` → `v0.1.0`). 새 버전은 `apps/desktop/package.json#version` 을 먼저 bump.
 - 서명 env: `APPLE_SIGNING_IDENTITY` + (Method A: `APPLE_ID`/`APPLE_PASSWORD`/`APPLE_TEAM_ID`) 또는 (Method B: `APPLE_API_KEY`/`APPLE_API_ISSUER`/`APPLE_API_KEY_PATH`). 예: `set -a; source ~/.config/agent-deck/release.env; set +a`.
-- `.github/workflows/release.yml` (`on: release: published`) — 위 로컬 release 가 발행되면 CI 가 Linux x64 `.AppImage` 를 빌드해 **버전 없는 정규명** (`Clawket-Linux-x86_64.AppImage`) 으로 같은 release 에 attach 한다. macOS dmg 도 `Clawket-macOS-<arch>.dmg` 로 올라가, 랜딩 Downloads 페이지가 `/releases/latest/download/<name>` 로 항상 최신을 가리킬 수 있다.
+- macOS 빌드는 **universal** (`--target universal-apple-darwin`, Apple Silicon + Intel 단일 dmg) 이며 `Clawket-macOS-universal.dmg` 로 발행된다.
+- `.github/workflows/release.yml` (`on: release: published`) — 위 로컬 release 가 발행되면 CI 가 Linux x64 `.AppImage` 를 빌드해 **버전 없는 정규명** (`Clawket-Linux-x86_64.AppImage`) 으로 같은 release 에 attach 한다. 버전 없는 자산명 덕에 랜딩 Downloads 가 `/releases/latest/download/<name>` 로 항상 최신을 가리킨다.
 - **배포 채널 = 랜딩 직접 다운로드.** 공개 랜딩의 Downloads 가 GitHub Release 자산을 직접 링크한다. plugin install-gate 의 desktop staging (`ensureDesktopBundle`) 은 사용하지 않으며 `components.json#desktop` 은 `null` 로 유지한다 (install gate 가 desktop 을 skip). 그 채널을 켜려면 자산을 `clawket-desktop-<tag>-<rust-target>.dmg/.AppImage` per-arch 명명으로 바꾸고 Intel(x86_64) macOS 빌드를 추가해야 한다 — 별도 후속.
 
 ## Design system 컨텍스트

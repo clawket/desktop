@@ -38,15 +38,14 @@ fi
 info "Building signed macOS .dmg for ${TAG}…"
 bash "${SCRIPT_DIR}/build-macos-release.sh"
 
-DMG="$(ls -t "${APP_DIR}"/src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)"
+DMG="$(ls -t "${APP_DIR}"/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg 2>/dev/null | head -1)"
 [[ -z "${DMG}" ]] && { err "No .dmg found after build"; exit 1; }
 info "Built: ${DMG##*/}"
 
 # Publish under a stable, version-less name so the landing page can link
-# /releases/latest/download/Clawket-macOS-<arch>.dmg forever (arch = arm64 on
-# Apple Silicon, x86_64 on Intel).
-ARCH="$(uname -m)"
-STABLE_DMG="${APP_DIR}/src-tauri/target/release/bundle/dmg/Clawket-macOS-${ARCH}.dmg"
+# /releases/latest/download/Clawket-macOS-universal.dmg forever. The build is a
+# universal binary (Apple Silicon + Intel), so one .dmg runs on every Mac.
+STABLE_DMG="$(dirname "${DMG}")/Clawket-macOS-universal.dmg"
 cp -f "${DMG}" "${STABLE_DMG}"
 
 info "Creating GitHub Release ${TAG} on ${REPO}…"
@@ -56,7 +55,7 @@ gh release create "${TAG}" "${STABLE_DMG}" \
   --title "Clawket Desktop ${TAG}" \
   --notes "Download the installer for your platform below.
 
-- **macOS** — \`Clawket-macOS-${ARCH}.dmg\`, Developer ID signed + notarized.
+- **macOS** — \`Clawket-macOS-universal.dmg\`, universal (Apple Silicon + Intel), Developer ID signed + notarized.
 - **Linux** — \`Clawket-Linux-x86_64.AppImage\`, attached by CI shortly after this release is published."
 
 info "Published ${TAG}. CI (on: release: published) now builds the Linux .AppImage,"
